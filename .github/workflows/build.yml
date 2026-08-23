@@ -10,17 +10,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Show repo contents
-        run: ls -R
-
-      - name: Unpack project
+      - name: Find the project
         run: |
-          if [ -f LocalCue.zip ]; then
-            unzip -o LocalCue.zip -d unpacked
-            echo "PROJECT_DIR=unpacked/LocalCue" >> $GITHUB_ENV
-          else
-            echo "PROJECT_DIR=." >> $GITHUB_ENV
+          echo "===== WHAT IS ACTUALLY IN THE REPO ====="
+          ls -R
+          echo "========================================"
+          find . -maxdepth 2 -name '*.zip' -exec unzip -o {} -d unpacked \;
+          HIT=$(find . -path '*/app/build.gradle.kts' | head -1)
+          if [ -z "$HIT" ]; then
+            echo "FAILED: app/build.gradle.kts is not in this repo."
+            exit 1
           fi
+          PROJ=$(dirname "$(dirname "$HIT")")
+          echo "Found project at: $PROJ"
+          echo "PROJECT_DIR=$PROJ" >> $GITHUB_ENV
 
       - uses: actions/setup-java@v4
         with:
